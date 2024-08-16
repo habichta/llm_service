@@ -16,8 +16,8 @@ def get_context(db: Session, context_id: int):
 
 
 def get_models(db: Session):
-    return db.query(models.Model).all()
+    return db.query(models.Models).all()
 
 
 def get_model(db: Session, model_id: int):
-    return db.query(models.Model).filter(models.Model.id == model_id).first()
+    return db.query(models.Models).filter(models.Model.id == model_id).first()
