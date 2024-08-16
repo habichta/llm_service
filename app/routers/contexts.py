@@ -1,11 +1,13 @@
 import logging
 
+import crud
+import database
+import schemas
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
-from .. import crud, database, schemas
 
 router = APIRouter()
 

@@ -1,6 +1,6 @@
+import models
+import schemas
 from sqlalchemy.orm import Session
-
-from . import models, schemas
 
 
 def create_context(db: Session, context: schemas.ContextCreate):

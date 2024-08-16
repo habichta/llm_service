@@ -1,6 +1,5 @@
+from database import Base
 from sqlalchemy import Column, Integer, String, Text
-
-from app.database import Base
 
 
 class Context(Base):

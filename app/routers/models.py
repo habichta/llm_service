@@ -1,12 +1,15 @@
 import logging
 
+import crud
+import database
+import schemas
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm.session import Session
 
+from llm_service import LLMService
+
 logger = logging.getLogger(__name__)
 
-from app import crud, database, schemas
-from app.llm_service import LLMService
 
 router = APIRouter()
 llm_service = LLMService()
