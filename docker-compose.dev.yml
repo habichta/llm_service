@@ -10,6 +10,8 @@ services:
     entrypoint: ["./entrypoint.dev.sh"]
     ports:
       - 8887:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   db:
     image: postgres:15.8

@@ -1,0 +1,13 @@
+disk: 40
+image: "nvcr.io/nvidia/tritonserver:24.07-vllm-python-py3"
+tag: "24.07-vllm-python-py3"
+label: "tritonserver"
+ssh: true
+jupyter: false
+direct: true
+jupyter_dir: ""
+jupyter_lab: false
+lang_utf8: true
+python_utf8: true
+force: false
+retry: 5

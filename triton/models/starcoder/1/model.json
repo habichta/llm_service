@@ -1,0 +1,6 @@
+{
+  "model": "BAAI/Aquila-7B",
+  "disable_log_requests": true,
+  "gpu_memory_utilization": 0.5,
+  "enforce_eager": true
+}
