@@ -72,7 +72,7 @@ check-logs-tritonserver:
 deploy-tritonserver: run-tritonserver check-logs-tritonserver
 
 deploy-models-tritonserver:
- @vastai copy models $(CONTRACT_ID):/opt/tritonserver/models
+ @vastai copy ./models $(CONTRACT_ID):/opt/tritonserver/models
 
 check-model-stats-tritonserver:
 	@curl -X GET http://localhost:8000/v2/models/stats | jq

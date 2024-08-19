@@ -2,11 +2,14 @@ import asyncio
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass
 from typing import Optional
 
+import crud
 import numpy as np
 import tritonclient.grpc.aio as grpcclient
+from sqlalchemy.orm import Session
 from tritonclient.utils import InferenceServerException
 
 TRITON_HTTP_SERVICE = os.getenv("TRITON_HTTP_SERVICE")
@@ -21,8 +24,6 @@ class RequestFlags:
     url: str
     stream_timeout: Optional[float]
     offset: int
-    input_prompts: str
-    results_file: str
     iterations: int
     streaming_mode: bool
     exclude_inputs_in_outputs: bool
@@ -39,10 +40,7 @@ class LLMService:
     def get_model_list(self):
         return [{"id": model_id, **model} for model_id, model in self.models.items()]
 
-    async def send_context_to_model(self, context: str, model_id: int):
-
-        # if model_id not in self.models:
-        #     raise ValueError("Model ID not found")
+    async def send_context_to_model(self, context: str, model_id: int, result_id: int, db: Session):
 
         if TRITON_GRPC_SERVICE is None:
             raise ValueError("Triton GRPC Service not set")
@@ -53,24 +51,18 @@ class LLMService:
             url="host.docker.internal:8001",
             stream_timeout=None,
             offset=0,
-            input_prompts="prompts.txt",
-            results_file="results.txt",
             iterations=1,
             streaming_mode=False,
             exclude_inputs_in_outputs=False,
             lora_name=None,
         )
 
-        triton_client = TritonClient(flags)
-        await triton_client.run_async(context)
+        # Preprocess context
 
-        # return request id to the client
+        triton_client = TritonClient(flags)
+        await triton_client.run_async(context, result_id, db)
 
         # get model_name by id
-
-        # create resource results with id
-
-        # save results in database
 
         # pre / postprocessor -> enforce json?
 
@@ -129,7 +121,8 @@ class TritonClient:
                     self._results_dict[result.get_response().id].append(i)
         return success
 
-    async def run(self, context: str):
+    async def run(self, context: str, result_id: int, db: Session):
+
         self._client = grpcclient.InferenceServerClient(url=self._flags.url, verbose=self._flags.verbose)
         sampling_parameters = {
             "temperature": "0.1",
@@ -144,17 +137,16 @@ class TritonClient:
 
         success = await self.process_stream(prompts, sampling_parameters, exclude_input_in_output)
 
-        print(self._results_dict)  # TODO: DB entry
+        if success:
+            print(self._results_dict)  # TODO: DB entry
+            crud.update_result(db, result_id, "completed", str(self._results_dict))  # TODO: Postprocessing
 
-        if self._flags.verbose:
-            with open(self._flags.results_file, "r") as file:
-                print(f"\nContents of `{self._flags.results_file}` ===>")
-                print(file.read())
+        else:
+            print("Failed to process")
+            crud.update_result(db, result_id, "failed", None)
 
-        # TODO: log success / fail
-
-    async def run_async(self, context: str):
-        await self.run(context)
+    async def run_async(self, context: str, result_id: int, db: Session):
+        await self.run(context, result_id, db)
 
     def create_request(
         self,

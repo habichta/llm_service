@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, Text
 
 
 class Context(Base):
@@ -13,3 +13,12 @@ class Models(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(Text)
+
+
+class Results(Base):
+    __tablename__ = "results"
+    id = Column(Integer, primary_key=True, index=True)
+    context_id = Column(Integer, nullable=False)  # TODO Foreign key
+    model_id = Column(Integer, nullable=False)  # TODO Foreign key
+    state = Column(String, index=True)
+    result = Column(Text, nullable=True)

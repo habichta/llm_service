@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -10,7 +12,7 @@ class Context(BaseModel):
     content: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ModelCreate(BaseModel):
@@ -24,4 +26,27 @@ class Model(BaseModel):
     description: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class Result(BaseModel):
+    id: int
+    context_id: int
+    model_id: int
+    state: str
+    result: Optional[str]
+
+    class Config:
+        from_attributes = True
+        protected_namespaces = ()
+
+
+class CreateResult(BaseModel):
+    context_id: int
+    model_id: int
+    state: str
+    result: Optional[str]
+
+    class Config:
+        from_attributes = True
+        protected_namespaces = ()
