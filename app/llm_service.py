@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import sys
-import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -12,6 +11,12 @@ import tritonclient.grpc.aio as grpcclient
 from sqlalchemy.orm import Session
 from tritonclient.utils import InferenceServerException
 
+# TODO:
+# - Add logging
+# - Add error handling
+# - Add type hints
+
+
 TRITON_HTTP_SERVICE = os.getenv("TRITON_HTTP_SERVICE")
 TRITON_GRPC_SERVICE = os.getenv("TRITON_GRPC_SERVICE")
 TRITON_METRICS_SERVICE = os.getenv("TRITON_METRICS_SERVICE")
@@ -19,6 +24,8 @@ TRITON_METRICS_SERVICE = os.getenv("TRITON_METRICS_SERVICE")
 
 @dataclass
 class RequestFlags:
+    """RequestFlags."""
+
     model: str
     verbose: bool
     url: str
@@ -31,22 +38,14 @@ class RequestFlags:
 
 
 class LLMService:
-    def __init__(self):
-        self.models = {
-            1: {"name": "model1", "description": "Description of Model 1"},
-            2: {"name": "model2", "description": "Description of Model 2"},
-        }
 
-    def get_model_list(self):
-        return [{"id": model_id, **model} for model_id, model in self.models.items()]
-
-    async def send_context_to_model(self, context: str, model_id: int, result_id: int, db: Session):
+    async def send_context_to_model(self, context: str, model_name: str, result_id: int, db: Session):
 
         if TRITON_GRPC_SERVICE is None:
             raise ValueError("Triton GRPC Service not set")
 
         flags = RequestFlags(
-            model="simple_model",
+            model=model_name,
             verbose=False,
             url="host.docker.internal:8001",
             stream_timeout=None,
@@ -80,7 +79,6 @@ class TritonClient:
         try:
             for iter in range(self._flags.iterations):
                 for i, prompt in enumerate(prompts):
-                    print(prompt)
                     prompt_id = self._flags.offset + (len(prompts) * iter) + i
                     self._results_dict[str(prompt_id)] = []
                     request = self.create_request(
@@ -90,7 +88,6 @@ class TritonClient:
                         sampling_parameters,
                         exclude_input_in_output,
                     )
-                    print(request)
                     yield request
         except Exception as error:
             print(f"Caught an error in the request iterator: {error}")
@@ -138,7 +135,6 @@ class TritonClient:
         success = await self.process_stream(prompts, sampling_parameters, exclude_input_in_output)
 
         if success:
-            print(self._results_dict)  # TODO: DB entry
             crud.update_result(db, result_id, "completed", str(self._results_dict))  # TODO: Postprocessing
 
         else:
@@ -177,11 +173,9 @@ class TritonClient:
         inputs.append(grpcclient.InferInput("exclude_input_in_output", [1], "BOOL"))
         inputs[-1].set_data_from_numpy(np.array([exclude_input_in_output], dtype=bool))
 
-        # Add requested outputs
         outputs = []
         outputs.append(grpcclient.InferRequestedOutput("text_output"))
 
-        # Issue the asynchronous sequence inference.
         print(f"Sending request {request_id}...")
 
         return {
