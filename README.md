@@ -2,7 +2,7 @@
 
 ### Architecture
 
-- `app` is a FastAPI based web service that serves the LLM API. It communicated with a Postgres DB to save contexts (prompts) and results. It forwards requests to Nvidia Triton
+- `app` is a FastAPI based web service that serves the LLM API. It communicates with a Postgres DB to save contexts (prompts) and results. It forwards requests to Nvidia Triton
 - `db` is a Postgres DB that stores contexts and Results
 - `triton` is a Nvidia Triton server that serves the LLM Models with a vLLM Backend
 
